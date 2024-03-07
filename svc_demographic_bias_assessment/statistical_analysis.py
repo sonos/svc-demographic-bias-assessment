@@ -1,6 +1,7 @@
 import itertools
 import logging
 import os
+import time
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
@@ -60,12 +61,11 @@ def compute_wer_boxplot_per_speaker(
         ["user_id", "mean_wer", "gender", "age_group", "dialectal_region", "ethnicity"]
     ].drop_duplicates()
     for col in ["gender", "age_group", "dialectal_region", "ethnicity"]:
-        fig = px.box(df_per_speaker, x=col, y="mean_wer")
-        fig.update_layout(
-            font=dict(
-                size=24,
-            )
-        )
+        df_tmp = df_per_speaker.copy()
+        if col == "ethnicity":
+            where_ethnicity = ~(df_per_speaker["ethnicity"].isna())
+            df_tmp = df_per_speaker[where_ethnicity]
+        fig = px.box(df_tmp, x=col, y="mean_wer")
         if col == "age_group":
             fig.update_xaxes(
                 categoryorder="array",
@@ -85,6 +85,17 @@ def compute_wer_boxplot_per_speaker(
                     "Western",
                 ],
             )
+
+        fig.update_layout(
+            font=dict(
+                size=30,
+            ),
+            xaxis_title="",
+            yaxis_title="Mean WER",
+            height=800,
+            width=1000,
+        )
+        fig.show()
         if save_figures:
             savefilepath = os.path.join(
                 save_directory, "plots", f"boxplot_wer_{col}.png"
@@ -264,7 +275,16 @@ def compute_splitted_emr_boxplot_per_speaker(
     )
     fig.update_xaxes(
         categoryorder="array",
-        categoryarray=sorted(df_per_speaker["dialectal_region"].unique()),
+        categoryarray=[
+            "Asian",
+            "LatinX",
+            "Inland-North",
+            "Mid-Atlantic",
+            "Midland",
+            "New England",
+            "Southern",
+            "Western",
+        ],
     )
     fig.show()
     if save_figures:
@@ -284,6 +304,7 @@ def _get_probability_table(df: pd.DataFrame, col1: str, col2: str) -> pd.DataFra
         where_ethnicity = ~(df["ethnicity"].isna())
         df_tmp = df[where_ethnicity]
     print(pd.crosstab(df_tmp[col1], df_tmp[col2], normalize="columns").T)
+    print()
     return pd.crosstab(df_tmp[col1], df_tmp[col2], margins=True, margins_name="Total").T
 
 
@@ -330,6 +351,7 @@ def perform_all_chi2_tests(
     all_chi2_results = {}
     for table in list_of_contingency_tables:
         logger.info(f"Performing chi2 test for {table.index.name}")
+        time.sleep(0.1)
         res = _perform_chi2_in_contingency_table(table)
         is_chi2_application_condition_met = (
             _assert_if_application_condition_chi2_is_met(res)
@@ -442,7 +464,7 @@ def _perform_univariate_log_reg_test_for_given_variable(
     try:
         log_reg = smf.logit(
             formula=f"exactlyParsed ~ C({variable_name})", data=dataframe
-        ).fit()
+        ).fit(disp=0)
     except LinAlgError as e:
         print(
             f"{Colors.FAIL}{dataset_tag}Univariate log reg for {Colors.UNDERLINE}{variable_name} failed{Colors.ENDC}"
@@ -528,7 +550,7 @@ def _perform_adjustment_test_for_given_variable(
         log_reg = smf.logit(
             formula=f"exactlyParsed ~ C({variable_name1}) + C({variable_name2})",
             data=dataframe,
-        ).fit()
+        ).fit(disp=0)
     except LinAlgError as e:
         print(
             f"{Colors.FAIL}Adjustment test with {Colors.UNDERLINE}({variable_name1}, {variable_name2}) failed"
@@ -558,19 +580,21 @@ def _perform_adjustment_test_for_given_variable(
     )
     if not is_variable2_confounding_factor:
         print(
-            f"{Colors.OKCYAN}{Colors.UNDERLINE}{variable_name2} is NOT a confounding factor of {variable_name1} "
+            f"{Colors.OKCYAN}{Colors.UNDERLINE}{variable_name2} is NOT a confounding factor for {variable_name1} "
             f"at the 5% level{Colors.ENDC}"
         )
     else:
         if are_conclusions_changed:
             print(
-                f"{Colors.FAIL}{Colors.UNDERLINE}{variable_name2} is a confounding factor of {variable_name1} and "
-                f"conclusions about {variable_name1} are changed at the 5% level{Colors.ENDC}"
+                f"{Colors.FAIL}{Colors.UNDERLINE}Test is statistically significant. {variable_name2} is a confounding "
+                f"factor for {variable_name1}. "
+                f"Conclusions about {variable_name1} are changed at the 5% level{Colors.ENDC}"
             )
         else:
             print(
-                f"{Colors.FAIL}{Colors.UNDERLINE}{variable_name2} is a confounding factor of {variable_name1} but "
-                f"conclusions about {variable_name1} are unchanged at the 5% level{Colors.ENDC}"
+                f"{Colors.FAIL}{Colors.UNDERLINE}Test is statistically significant. "
+                f"But conclusions about {variable_name1} are unchanged at the 5% level therefore "
+                f"{variable_name2} is NOT a confounding factor for {variable_name1}.{Colors.ENDC}"
             )
 
     # Now, make the adjustment of variable 2 on variable 1 i.e. is variable 1 a confounding factor of variable 2?
@@ -588,20 +612,23 @@ def _perform_adjustment_test_for_given_variable(
     )
     if not is_variable1_confounding_factor:
         print(
-            f"{Colors.OKCYAN}{Colors.UNDERLINE}{variable_name1} is NOT a confounding factor of {variable_name2} "
+            f"{Colors.OKCYAN}{Colors.UNDERLINE}{variable_name1} is NOT a confounding factor for {variable_name2} "
             f"at the 5% level{Colors.ENDC}"
         )
     else:
         if are_conclusions_changed:
             print(
-                f"{Colors.FAIL}{Colors.UNDERLINE}{variable_name1} is a confounding factor of {variable_name2} and "
-                f"conclusions about {variable_name2} are changed at the 5% level{Colors.ENDC}"
+                f"{Colors.FAIL}{Colors.UNDERLINE}Test is statistically significant. {variable_name1} is a confounding "
+                f"factor for {variable_name2}. "
+                f"Conclusions about {variable_name2} are changed at the 5% level{Colors.ENDC}"
             )
         else:
             print(
-                f"{Colors.FAIL}{Colors.UNDERLINE}{variable_name1} is a confounding factor of {variable_name2} but "
-                f"conclusions about {variable_name2} are unchanged at the 5% level{Colors.ENDC}"
+                f"{Colors.FAIL}{Colors.UNDERLINE}Test is statistically significant. "
+                f"But conclusions about {variable_name2} are unchanged at the 5% level therefore "
+                f"{variable_name1} is NOT a confounding factor for {variable_name2}.{Colors.ENDC}"
             )
+    print()
     return log_reg
 
 
@@ -647,7 +674,7 @@ def _compare_pvalues_of_shared_variables(
     )
     if are_pvalues_close_enough:
         # if close enough, no confounding bias and the conclusions about the first variable are unchanged
-        return False, False
+        return True, False
 
     # else, there are several cases to check
     are_univariate_model_pvalues_significant = _are_pvalues_statistically_significant(
@@ -687,7 +714,7 @@ def _compare_pvalues_of_shared_variables(
         not are_univariate_model_pvalues_significant
         and not are_multivariate_model_pvalues_significant
     ):
-        return False, False
+        return True, False
 
 
 def _likelihood_ratio_test_significance(
@@ -710,7 +737,8 @@ def _likelihood_ratio_test_significance(
         raise NotImplementedError(
             f"Difference in number of parameters: {difference_in_nb_parameters}"
         )
-    return 2 * (multivariate_model.llf - univariate_model.llf) > quantile
+    test_statistic = 2 * (multivariate_model.llf - univariate_model.llf)
+    return test_statistic > quantile
 
 
 def _is_one_way_anova_statistically_significant(

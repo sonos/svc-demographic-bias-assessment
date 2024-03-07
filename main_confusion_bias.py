@@ -69,6 +69,7 @@ if __name__ == "__main__":
     df = df.reset_index()
     logger.info(df.shape)
 
+    ############################################ DIALECTAL REGION ############################################
     logger.info(
         "Compute for each dialectal region, the number of speakers, samples and age and gender repartition to detect "
         "possible empty buckets"
@@ -100,6 +101,67 @@ if __name__ == "__main__":
     )
     logger.info(tabulate(df3, headers="keys", tablefmt="psql"))
 
+    ############################################ AGE ############################################
+    logger.info(
+        "Compute for each age group, the number of speakers, samples and dialectal region and gender repartition to detect "
+        "possible empty buckets"
+    )
+
+    logger.info("Number of audio samples & speakers per age group:")
+    df1 = df.groupby("age_group").agg({"audio_id": "count", "user_id": "nunique"})
+    logger.info(tabulate(df1, headers="keys", tablefmt="psql"))
+
+    logger.info("Distribution of dialectal region per age group:")
+    df2 = df.groupby(["age_group", "dialectal_region"])["audio_id"].count().to_frame()
+    df2["percentage"] = (
+        df2.groupby(["age_group"])["audio_id"]
+        .transform(lambda x: (x / x.sum()) * 100)
+        .round()
+        .to_frame()
+    )
+    logger.info(tabulate(df2, headers="keys", tablefmt="psql"))
+
+    logger.info("Distribution of gender per age group:")
+    df3 = df.groupby(["age_group", "gender"])["audio_id"].count().to_frame()
+    df3["percentage"] = (
+        df3.groupby(["age_group"])["audio_id"]
+        .transform(lambda x: (x / x.sum()) * 100)
+        .round()
+        .to_frame()
+    )
+    logger.info(tabulate(df3, headers="keys", tablefmt="psql"))
+
+    ############################################ GENDER ############################################
+    logger.info(
+        "Compute for each gender, the number of speakers, samples and dialectal region and age group repartition to detect "
+        "possible empty buckets"
+    )
+
+    logger.info("Number of audio samples & speakers per gender:")
+    df1 = df.groupby("gender").agg({"audio_id": "count", "user_id": "nunique"})
+    logger.info(tabulate(df1, headers="keys", tablefmt="psql"))
+
+    logger.info("Distribution of dialectal region per gender:")
+    df2 = df.groupby(["gender", "dialectal_region"])["audio_id"].count().to_frame()
+    df2["percentage"] = (
+        df2.groupby(["gender"])["audio_id"]
+        .transform(lambda x: (x / x.sum()) * 100)
+        .round()
+        .to_frame()
+    )
+    logger.info(tabulate(df2, headers="keys", tablefmt="psql"))
+
+    logger.info("Distribution of gender per age group:")
+    df3 = df.groupby(["gender", "age_group"])["audio_id"].count().to_frame()
+    df3["percentage"] = (
+        df3.groupby(["gender"])["audio_id"]
+        .transform(lambda x: (x / x.sum()) * 100)
+        .round()
+        .to_frame()
+    )
+    logger.info(tabulate(df3, headers="keys", tablefmt="psql"))
+
+    ############################################ ETHNICITY ############################################
     if datapath_args.set_ == "test":
         logger.info("Focus on the particular case of the partial 'ethnicity' label")
         where = ~df["ethnicity"].isna()
