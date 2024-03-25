@@ -386,7 +386,7 @@ C(dialectal_region)[T.Western]       3.019537  2.768006  3.293924
 
 In this case, every group is better recognized than the Asian reference group. However, while requests from all American
 regional groups have around 3 times more chance to be exactly parsed than Asians' (ORs are around $3$, all p-values are 
-$<\num{1e-89}$), this is only just slightly the case for the LatinX group ($OR=1.15$).
+$<1e-89$), this is only just slightly the case for the LatinX group ($OR=1.15$).
 
 #### Multivariate analysis
 
@@ -396,59 +396,41 @@ This step is crucial to shine light on possible mixed effects. Below is the raw 
 INFO:__main__:Performing adjustment tests
 
 Adjustment test with age_group, gender:
-Optimization terminated successfully.
-         Current function value: 0.338649
-         Iterations 6
-gender is NOT a confounding factor of age_group at the 5% level
-age_group is a confounding factor of gender but conclusions about gender are unchanged at the 5% level
+Test is statistically significant. But conclusions about age_group are unchanged at the 5% level therefore gender is NOT a confounding factor for age_group.
+Test is statistically significant. But conclusions about gender are unchanged at the 5% level therefore age_group is NOT a confounding factor for gender.
 
 Adjustment test with age_group, dialectal_region:
-Optimization terminated successfully.
-         Current function value: 0.330433
-         Iterations 7
-dialectal_region is a confounding factor of age_group but conclusions about age_group are unchanged at the 5% level
-age_group is a confounding factor of dialectal_region but conclusions about dialectal_region are unchanged at the 5% level
+Test is statistically significant. But conclusions about age_group are unchanged at the 5% level therefore dialectal_region is NOT a confounding factor for age_group.
+Test is statistically significant. But conclusions about dialectal_region are unchanged at the 5% level therefore age_group is NOT a confounding factor for dialectal_region.
 
 Adjustment test with age_group, ethnicity:
-Optimization terminated successfully.
-         Current function value: 0.107480
-         Iterations 8
-ethnicity is NOT a confounding factor of age_group at the 5% level
-age_group is NOT a confounding factor of ethnicity at the 5% level
+Test is statistically significant. But conclusions about age_group are unchanged at the 5% level therefore ethnicity is NOT a confounding factor for age_group.
+age_group is NOT a confounding factor for ethnicity at the 5% level
 
 Adjustment test with gender, dialectal_region:
-Optimization terminated successfully.
-         Current function value: 0.331455
-         Iterations 6
-dialectal_region is a confounding factor of gender and conclusions about gender are changed at the 5% level
-gender is NOT a confounding factor of dialectal_region at the 5% level
+Test is statistically significant. dialectal_region is a confounding factor for gender. Conclusions about gender are changed at the 5% level
+gender is NOT a confounding factor for dialectal_region at the 5% level
 
 Adjustment test with gender, ethnicity:
-Optimization terminated successfully.
-         Current function value: 0.107533
-         Iterations 8
-ethnicity is NOT a confounding factor of gender at the 5% level
-gender is NOT a confounding factor of ethnicity at the 5% level
+Test is statistically significant. But conclusions about gender are unchanged at the 5% level therefore ethnicity is NOT a confounding factor for gender.
+gender is NOT a confounding factor for ethnicity at the 5% level
 
 Adjustment test with dialectal_region, ethnicity:
-Optimization terminated successfully.
-         Current function value: 0.107164
-         Iterations 8
-ethnicity is NOT a confounding factor of dialectal_region at the 5% level
-dialectal_region is NOT a confounding factor of ethnicity at the 5% level
+Test is statistically significant. But conclusions about dialectal_region are unchanged at the 5% level therefore ethnicity is NOT a confounding factor for dialectal_region.
+dialectal_region is NOT a confounding factor for ethnicity at the 5% level
 ```
 
 To get more detail results, we encourage you to look deeper in the code to better grasp the logic and the complete computations.
 
-TL;DR:
+**TL;DR:**
 - dialectal region is a confounding factor for gender
 - there is a cross-effect of age and dialectal region
 
 ## License
 
-This repository and the SVC Bias Assessment Dataset are under the following [LICENSE](). They can be used only for academic
-and/or research purposes, not for commercial use. Publication is permitted only if the dataset is unmodified and subject
-to the same license terms. Any publication must include a full citation of the paper:
+This repository and the SVC Bias Assessment Dataset are under the following [LICENSE](https://github.com/sonos/svc-demographic-bias-assessment/blob/main/LICENSE). 
+They can be used only for academic and/or research purposes, not for commercial use. Publication is permitted only if 
+the dataset is unmodified and subject to the same license terms. Any publication must include a full citation of the paper:
 
 ```text
 Sekkat C. et al., 2024, "Sonos Voice Control Bias Assessment Dataset: A Methodology for Demographic Bias Assessment in Voice Assistants"
